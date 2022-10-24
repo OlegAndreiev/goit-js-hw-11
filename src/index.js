@@ -1,29 +1,34 @@
 import Notiflix, { Notify } from 'notiflix';
-// import { apiPixabay } from './js/pixabay';
-const form = document.querySelector('form');
-const input = document.querySelector('input');
-const submitBtn = document.querySelector('button');
-const gallery = document.querySelector('.gallery');
+import SimpleLightbox from 'simplelightbox';
+import 'simplelightbox/dist/simple-lightbox.min.css';
+import { apiPixabay } from './js/pixabay';
+export const form = document.querySelector('form');
+export const input = document.querySelector('input');
+const imagesContainer = document.querySelector('.gallery');
 const guard = document.querySelector('.guard');
-const loadMore = document.querySelector('.more');
-const DEFAULT_URL = 'https://pixabay.com/api/';
-const KEY = '30800366-aecfdce11bab1e79da5c222a8';
+
 const options = {
   root: null,
-  rootMargin: '50px',
+  rootMargin: '300px',
   threshold: 1,
 };
 
 form.addEventListener('submit', onSubmit);
-loadMore.addEventListener('click', onLoad);
+
 const observer = new IntersectionObserver(onLoad, options);
-let page = 1;
+export let page = 1;
 
 function onSubmit(evt) {
   evt.preventDefault();
-  gallery.innerHTML = '';
+  imagesContainer.innerHTML = '';
+  page = 1;
+
+  if (input.value === '') {
+    return;
+  }
+  console.log(input.value);
   apiPixabay().then(data => {
-    gallery.insertAdjacentHTML('beforeend', createMarkupByPhotos(data));
+    imagesContainer.insertAdjacentHTML('beforeend', createMarkupByPhotos(data));
     if (data.hits.length === 0) {
       Notiflix.Notify.failure(
         'Sorry, there are no images matching your search query. Please try again.'
@@ -31,11 +36,14 @@ function onSubmit(evt) {
     }
     if (data.hits.length !== 0) {
       Notiflix.Notify.success(`Hooray! We found ${data.totalHits} images.`);
+      observer.observe(guard);
     }
-    // onLoad();
-    observer.observe(guard);
+    // observer.unobserve(guard);
+
+    lightbox();
     return data;
   });
+  // form.reset();
 }
 
 function onLoad(entries) {
@@ -45,9 +53,13 @@ function onLoad(entries) {
     if (entry.isIntersecting) {
       page += 1;
       apiPixabay(page).then(data => {
-        gallery.insertAdjacentHTML('beforeend', createMarkupByPhotos(data));
-        console.log(data);
-        if (data.hits === []) {
+        imagesContainer.insertAdjacentHTML(
+          'beforeend',
+          createMarkupByPhotos(data)
+        );
+        lightbox.refresh();
+        console.log(data.hits);
+        if (data.hits.length === 0) {
           observer.unobserve(guard);
         }
       });
@@ -55,52 +67,37 @@ function onLoad(entries) {
   });
 }
 
-async function apiPixabay() {
-  const params = new URLSearchParams({
-    key: KEY,
-    q: input.value,
-    image_type: 'photo',
-    orientation: 'horizontal',
-    safesearch: true,
-    page: page,
-    per_page: 5,
+function lightbox() {
+  lightbox = new SimpleLightbox('.gallery a', {
+    captionsData: 'alt',
+    captionDelay: 250,
+    overlayOpacity: 0.7,
   });
-  console.log(page);
-  //   console.log(input.value);
-  if (input.value === '') {
-    return;
-  }
-
-  return await fetch(`${DEFAULT_URL}?${params}`)
-    .then(response => {
-      if (!response.ok) {
-        throw new Error();
-      }
-      //   observer.observe(guard);
-      return response.json();
-    })
-    .catch(err => console.log(err));
 }
-
 function createMarkupByPhotos(arr) {
-  //   console.log(arr.hits);
   return arr.hits
     .map(
       item =>
         `<div class="photo-card">
-  <img src="${item.webformatURL}" alt="${item.tags}" loading="lazy" />
+  <a class="photo-card" href="${item.largeImageURL}">
+  <img  class="gallery__image" src="${item.webformatURL}" alt="${item.tags}" loading="lazy" />
+  </a>
   <div class="info">
     <p class="info-item">
-      <b>Likes: ${item.likes}</b>
+      <b>Likes:</b>
+      <b><span class="info-item-span">${item.likes}</span></b>
     </p>
     <p class="info-item">
-      <b>Views: ${item.views}</b>
+      <b>Views:</b>
+      <b><span class="info-item-span">${item.views}</span></b>
     </p>
     <p class="info-item">
-      <b>Comments: ${item.comments}</b>
+      <b>Comments:</b>
+      <b><span class="info-item-span">${item.comments}</span></b>
     </p>
     <p class="info-item">
-      <b>Downloads: ${item.downloads}</b>
+      <b>Downloads:</b>
+      <b><span class="info-item-span">${item.downloads}</span></b>
     </p>
   </div>
 </div>`
