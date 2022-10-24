@@ -1,5 +1,5 @@
 import Notiflix, { Notify } from 'notiflix';
-import { apiPixabay } from './js/pixabay';
+// import { apiPixabay } from './js/pixabay';
 const form = document.querySelector('form');
 const input = document.querySelector('input');
 const submitBtn = document.querySelector('button');
@@ -15,27 +15,39 @@ const options = {
 };
 
 form.addEventListener('submit', onSubmit);
-
+loadMore.addEventListener('click', onLoad);
 const observer = new IntersectionObserver(onLoad, options);
 let page = 1;
 
-// aaa().then(data => {
-//   //   console.log(data);
-//   gallery.insertAdjacentHTML('beforeend', createMarkupByPhotos(data.hits));
-//   observer.observe(guard);
-// });
-
-// loadMore.addEventListener('click', onLoad);
+function onSubmit(evt) {
+  evt.preventDefault();
+  gallery.innerHTML = '';
+  apiPixabay().then(data => {
+    gallery.insertAdjacentHTML('beforeend', createMarkupByPhotos(data));
+    if (data.hits.length === 0) {
+      Notiflix.Notify.failure(
+        'Sorry, there are no images matching your search query. Please try again.'
+      );
+    }
+    if (data.hits.length !== 0) {
+      Notiflix.Notify.success(`Hooray! We found ${data.totalHits} images.`);
+    }
+    // onLoad();
+    observer.observe(guard);
+    return data;
+  });
+}
 
 function onLoad(entries) {
+  console.log(entries[0].isIntersecting);
   entries.forEach(entry => {
     // console.log(entry);
     if (entry.isIntersecting) {
       page += 1;
-      aaa(page).then(data => {
+      apiPixabay(page).then(data => {
         gallery.insertAdjacentHTML('beforeend', createMarkupByPhotos(data));
         console.log(data);
-        if (data.hits === data.totalHits) {
+        if (data.hits === []) {
           observer.unobserve(guard);
         }
       });
@@ -43,14 +55,7 @@ function onLoad(entries) {
   });
 }
 
-function onSubmit(evt) {
-  evt.preventDefault();
-  observer.observe(guard);
-  aaa();
-}
-
-function aaa(page) {
-  //   gallery.innerHTML = '';
+async function apiPixabay() {
   const params = new URLSearchParams({
     key: KEY,
     q: input.value,
@@ -62,25 +67,17 @@ function aaa(page) {
   });
   console.log(page);
   //   console.log(input.value);
-  return fetch(`${DEFAULT_URL}?${params}`)
+  if (input.value === '') {
+    return;
+  }
+
+  return await fetch(`${DEFAULT_URL}?${params}`)
     .then(response => {
       if (!response.ok) {
         throw new Error();
       }
+      //   observer.observe(guard);
       return response.json();
-    })
-    .then(data => {
-      gallery.insertAdjacentHTML('beforeend', createMarkupByPhotos(data));
-      //   const markupPhotos = createMarkupByPhotos(data);
-      //   gallery.innerHTML = markupPhotos;
-      if (data.hits.length === 0) {
-        Notiflix.Notify.failure(
-          'Sorry, there are no images matching your search query. Please try again.'
-        );
-      }
-      if (data.hits.length !== 0) {
-        Notiflix.Notify.success(`Hooray! We found ${data.totalHits} images.`);
-      }
     })
     .catch(err => console.log(err));
 }
