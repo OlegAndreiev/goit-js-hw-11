@@ -22,11 +22,15 @@ function onSubmit(evt) {
   evt.preventDefault();
   imagesContainer.innerHTML = '';
   page = 1;
-
+  if (observer) {
+    observer.disconnect();
+  }
   if (input.value === '') {
+    Notiflix.Notify.failure(
+      'Sorry, search field cannot be empty. Please try again.'
+    );
     return;
   }
-  console.log(input.value);
   apiPixabay().then(data => {
     imagesContainer.insertAdjacentHTML('beforeend', createMarkupByPhotos(data));
     if (data.hits.length === 0) {
@@ -36,20 +40,16 @@ function onSubmit(evt) {
     }
     if (data.hits.length !== 0) {
       Notiflix.Notify.success(`Hooray! We found ${data.totalHits} images.`);
-      observer.observe(guard);
     }
-    // observer.unobserve(guard);
+    lightbox.refresh();
 
-    lightbox();
     return data;
   });
-  // form.reset();
 }
 
 function onLoad(entries) {
-  console.log(entries[0].isIntersecting);
+  lightbox();
   entries.forEach(entry => {
-    // console.log(entry);
     if (entry.isIntersecting) {
       page += 1;
       apiPixabay(page).then(data => {
@@ -57,8 +57,7 @@ function onLoad(entries) {
           'beforeend',
           createMarkupByPhotos(data)
         );
-        lightbox.refresh();
-        console.log(data.hits);
+
         if (data.hits.length === 0) {
           observer.unobserve(guard);
         }
@@ -67,14 +66,8 @@ function onLoad(entries) {
   });
 }
 
-function lightbox() {
-  lightbox = new SimpleLightbox('.gallery a', {
-    captionsData: 'alt',
-    captionDelay: 250,
-    overlayOpacity: 0.7,
-  });
-}
 function createMarkupByPhotos(arr) {
+  observer.observe(guard);
   return arr.hits
     .map(
       item =>
@@ -103,4 +96,12 @@ function createMarkupByPhotos(arr) {
 </div>`
     )
     .join('');
+}
+
+function lightbox() {
+  const lightbox = new SimpleLightbox('.gallery a', {
+    captionsData: 'alt',
+    captionDelay: 250,
+    overlayOpacity: 0.7,
+  });
 }
