@@ -32,13 +32,14 @@ function onSubmit(evt) {
     return;
   }
   apiPixabay().then(data => {
+    console.log(data);
     imagesContainer.insertAdjacentHTML('beforeend', createMarkupByPhotos(data));
-    if (data.hits.length === 0) {
+    if (data.data.hits.length === 0) {
       Notiflix.Notify.failure(
         'Sorry, there are no images matching your search query. Please try again.'
       );
     }
-    if (data.hits.length !== 0) {
+    if (data.data.hits.length !== 0) {
       Notiflix.Notify.success(`Hooray! We found ${data.totalHits} images.`);
     }
     lightbox.refresh();
@@ -58,7 +59,7 @@ function onLoad(entries) {
           createMarkupByPhotos(data)
         );
 
-        if (data.hits.length === 0) {
+        if (data.data.hits.length === 0) {
           observer.unobserve(guard);
         }
       });
@@ -67,8 +68,9 @@ function onLoad(entries) {
 }
 
 function createMarkupByPhotos(arr) {
+  console.log(arr);
   observer.observe(guard);
-  return arr.hits
+  return arr.data.hits
     .map(
       item =>
         `<div class="photo-card">

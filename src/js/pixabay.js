@@ -1,6 +1,7 @@
 const DEFAULT_URL = 'https://pixabay.com/api/';
 const KEY = '30800366-aecfdce11bab1e79da5c222a8';
 import { input, page } from '../index';
+import axios from 'axios';
 export async function apiPixabay() {
   const params = new URLSearchParams({
     key: KEY,
@@ -15,12 +16,15 @@ export async function apiPixabay() {
     return;
   }
 
-  return await fetch(`${DEFAULT_URL}?${params}`)
+  return await axios
+    .get(`${DEFAULT_URL}?${params}`)
     .then(response => {
-      if (!response.ok) {
+      if (!response.status) {
         throw new Error();
       }
-      return response.json();
+
+      console.log(response);
+      return response;
     })
     .catch(err => console.log(err));
 }
