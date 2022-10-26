@@ -32,7 +32,6 @@ function onSubmit(evt) {
     return;
   }
   apiPixabay().then(data => {
-    console.log(data);
     imagesContainer.insertAdjacentHTML('beforeend', createMarkupByPhotos(data));
     if (data.data.hits.length === 0) {
       Notiflix.Notify.failure(
@@ -68,7 +67,6 @@ function onLoad(entries) {
 }
 
 function createMarkupByPhotos(arr) {
-  console.log(arr);
   observer.observe(guard);
   return arr.data.hits
     .map(

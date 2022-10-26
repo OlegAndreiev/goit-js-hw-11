@@ -12,7 +12,12 @@ export async function apiPixabay() {
     page: page,
     per_page: 40,
   });
+  const inputTrim= input.value.trim()
   if (input.value === '') {
+    return;
+  }
+  if (input.value === ' ' || input.value === '  ' || input.value === '   ' || input.value === '    ' || input.value === '     ')  {
+    input.value = inputTrim
     return;
   }
 
@@ -22,8 +27,6 @@ export async function apiPixabay() {
       if (!response.status) {
         throw new Error();
       }
-
-      console.log(response);
       return response;
     })
     .catch(err => console.log(err));
